@@ -1,34 +1,37 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { VentaService } from './venta.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
-import { UpdateVentaDto } from './dto/update-venta.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
 
-@Controller('venta')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('ventas')
 export class VentaController {
   constructor(private readonly ventaService: VentaService) {}
 
   @Post()
-  create(@Body() createVentaDto: CreateVentaDto) {
-    return this.ventaService.create(createVentaDto);
+  @Roles('cliente')
+  crearVenta(@Body() dto: CreateVentaDto, @Request() req) {
+    return this.ventaService.crearVenta(dto, req.user);
+  }
+
+  @Get('mis-compras')
+  @Roles('cliente')
+  obtenerMisCompras(@Request() req) {
+    return this.ventaService.obtenerMisVentas(req.user.id_usuario);
   }
 
   @Get()
-  findAll() {
-    return this.ventaService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ventaService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVentaDto: UpdateVentaDto) {
-    return this.ventaService.update(+id, updateVentaDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ventaService.remove(+id);
+  @Roles('admin')
+  obtenerTodas() {
+    return this.ventaService.obtenerTodas();
   }
 }

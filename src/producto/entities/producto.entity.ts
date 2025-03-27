@@ -6,11 +6,13 @@ export class Producto {
   @PrimaryGeneratedColumn()
   id_producto: number;
 
-  @Column({ length: 30 })
+  @Column({ length: 100, nullable: true })
   nom_producto: string;
 
-  @Column({ length: 100 })
+
+  @Column({ length: 255, nullable: true }) // temporalmente
   descripcion: string;
+
 
   @Column('numeric')
   precio: number;
