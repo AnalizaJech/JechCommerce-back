@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { ProductoModule } from './producto/producto.module';
+import { VentaModule } from './venta/venta.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ProductoModule } from './producto/producto.module';
     }),
     ProductoModule,
     UsuarioModule,
+    VentaModule,
     AuthModule,
   ],
   controllers: [AppController],

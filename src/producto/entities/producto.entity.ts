@@ -26,6 +26,12 @@ export class Producto {
   @Column('numeric')
   precio_final: number;
 
+  
+  @Column({ type: 'int', nullable: true })
+  stock: number;
+
+  
+
   @OneToMany(() => Venta, venta => venta.producto)
   ventas: Venta[];
 }
