@@ -12,27 +12,45 @@ export class ProductoService {
     private productoRepository: Repository<Producto>,
   ) {}
 
+  // Crear un producto
   async create(createDto: CreateProductoDto): Promise<Producto> {
-    console.log('DTO recibido:', createDto); // <- Añade esto para ver qué llega
+    console.log('DTO recibido:', createDto);
   
-    const product = this.productoRepository.create(createDto);
+    const isOferta = createDto.is_oferta ?? false;
   
-    if (createDto.is_oferta && createDto.porcentaje_oferta) {
-      product.precio_final = Number(
-        createDto.precio - (createDto.precio * createDto.porcentaje_oferta) / 100
-      );
+    // Si no está en oferta, no le ponemos porcentaje
+    const productoData: Partial<Producto> = {
+      nom_producto: createDto.nom_producto,
+      descripcion: createDto.descripcion,
+      precio: createDto.precio,
+      stock: createDto.stock,
+      is_oferta: isOferta,
+      porcentaje_oferta: isOferta ? createDto.porcentaje_oferta : null,
+    };
+  
+    const product = this.productoRepository.create(productoData);
+  
+    // Cálculo seguro del precio final
+    if (isOferta && createDto.porcentaje_oferta != null) {
+      product.precio_final =
+        createDto.precio - (createDto.precio * createDto.porcentaje_oferta) / 100;
     } else {
-      product.precio_final = Number(createDto.precio);
+      product.precio_final = createDto.precio;
     }
   
     return this.productoRepository.save(product);
   }
   
+  
+  
+  
 
+  // Obtener todos los productos
   findAll(): Promise<Producto[]> {
     return this.productoRepository.find();
   }
 
+  // Obtener un producto por id
   async findOne(id: number): Promise<Producto> {
     const product = await this.productoRepository.findOne({ where: { id_producto: id } });
     if (!product) {
@@ -41,28 +59,40 @@ export class ProductoService {
     return product;
   }
 
+  // Actualizar un producto
   async update(id: number, updateDto: UpdateProductoDto): Promise<Producto> {
+    console.log('DTO recibido para actualización:', updateDto); // Agrega este log para verificar los datos recibidos
+  
     const product = await this.findOne(id);
-
-    // Mezcla datos al objeto product
+  
+    // Mezcla los datos del DTO con el producto existente
     this.productoRepository.merge(product, updateDto);
-
-    // Recalcula precio_final si recibimos cambios
-    if (updateDto.is_oferta !== undefined && updateDto.porcentaje_oferta !== undefined) {
-      if (updateDto.is_oferta) {
-        product.precio_final = Number(
-          product.precio - (product.precio * updateDto.porcentaje_oferta) / 100
-        );
-      } else {
-        product.precio_final = Number(product.precio);
-      }
+  
+    // Recalcular precio final si hay cambios
+    if (updateDto.is_oferta !== undefined || updateDto.porcentaje_oferta !== undefined) {
+      const isOferta = updateDto.is_oferta !== undefined ? updateDto.is_oferta : product.is_oferta;
+      this.calcularPrecioFinal(product, isOferta, updateDto.porcentaje_oferta);
     }
-
+  
     return this.productoRepository.save(product);
   }
+  
+  
 
+
+  // Eliminar un producto
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // para lanzar error si no existe
+    await this.findOne(id); // Lanza error si no existe el producto
     await this.productoRepository.delete(id);
   }
+
+  // Método para calcular el precio final del producto basado en oferta
+  private calcularPrecioFinal(product: Producto, isOferta: boolean, porcentajeOferta?: number) {
+    if (isOferta && porcentajeOferta != null) {
+      product.precio_final = product.precio - (product.precio * porcentajeOferta) / 100;
+    } else {
+      product.precio_final = product.precio;
+    }
+  }
+  
 }

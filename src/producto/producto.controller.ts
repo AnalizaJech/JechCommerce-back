@@ -7,6 +7,7 @@ import {
   Delete,
   Put,
   UseGuards,
+  ParseIntPipe,  // Importamos el ParseIntPipe
 } from '@nestjs/common';
 import { ProductoService } from './producto.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
@@ -16,40 +17,40 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
 @Controller('productos')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard) // Protegemos todas las rutas con JwtAuthGuard y RolesGuard
 export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
-  // Sólo un usuario con rol "admin" puede crear productos
+  // Ruta para crear productos, solo accesible por un "admin"
   @Roles('admin')
   @Post()
   create(@Body() createDto: CreateProductoDto) {
     return this.productoService.create(createDto);
   }
 
-  // GET: Todos los roles autenticados pueden ver los productos
+  // Ruta para obtener todos los productos, accesible por cualquier usuario autenticado
   @Get()
   findAll() {
     return this.productoService.findAll();
   }
 
-  // GET: un producto por ID (usuario autenticado)
+  // Ruta para obtener un producto por su ID (requiere autenticación)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productoService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {  // Usamos ParseIntPipe para convertir el parámetro id
+    return this.productoService.findOne(id);
   }
 
-  // PUT: sólo "admin" puede actualizar
+  // Ruta para actualizar un producto por ID, solo accesible por un "admin"
   @Roles('admin')
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateDto: UpdateProductoDto) {
-    return this.productoService.update(+id, updateDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateDto: UpdateProductoDto) {
+    return this.productoService.update(id, updateDto);
   }
 
-  // DELETE: sólo "admin" puede eliminar
+  // Ruta para eliminar un producto por ID, solo accesible por un "admin"
   @Roles('admin')
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productoService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.productoService.remove(id);
   }
 }

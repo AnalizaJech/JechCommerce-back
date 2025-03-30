@@ -1,31 +1,41 @@
 import { NestFactory } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
-dotenv.config();
+import * as path from 'path';
+import { AppDataSource } from './data-source';
+
+// Cargar variables desde .env.production siempre
+dotenv.config({
+  path: path.resolve(process.cwd(), `.env.production`),
+});
 
 async function bootstrap() {
+  // Inicializar conexión con Render (sin synchronize)
+  try {
+    await AppDataSource.initialize();
+    console.log('✅ Conectado a PostgreSQL en Render correctamente');
+  } catch (err) {
+    console.error('❌ Error al conectar con la base de datos de Render:', err);
+    process.exit(1); // 🔴 Si falla la conexión, salimos del proceso
+  }
+
   const app = await NestFactory.create(AppModule);
 
-  // 1. Habilitar validación automática para DTOs
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
-  // 2. Habilitar CORS para el frontend
   app.enableCors({
     origin: 'http://localhost:4200',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 
-  // 3. Swagger para documentar tu API
   const config = new DocumentBuilder()
     .setTitle('JechCommerce API')
     .setDescription('Documentación interactiva de la API')
     .setVersion('1.0')
-    .addBearerAuth() // permite autenticación con JWT en Swagger
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
