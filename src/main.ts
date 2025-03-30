@@ -10,6 +10,7 @@ import { AppDataSource } from './data-source';
 dotenv.config({
   path: path.resolve(process.cwd(), `.env.production`),
 });
+console.log(process.env.DB_HOST);  // Verifica que las variables estén siendo leídas correctamente
 
 async function bootstrap() {
   // Inicializar conexión con Render (sin synchronize)

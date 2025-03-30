@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Producto } from './entities/producto.entity';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class ProductoService {
@@ -23,11 +24,13 @@ export class ProductoService {
       nom_producto: createDto.nom_producto,
       descripcion: createDto.descripcion,
       precio: createDto.precio,
-      stock: createDto.stock,
+      stock: typeof createDto.stock === 'number' ? createDto.stock : Number(createDto.stock) || 0,
+
       is_oferta: isOferta,
       porcentaje_oferta: isOferta ? createDto.porcentaje_oferta : null,
     };
-  
+    console.log('Stock recibido:', createDto.stock, typeof createDto.stock);
+
     const product = this.productoRepository.create(productoData);
   
     // Cálculo seguro del precio final
@@ -82,9 +85,23 @@ export class ProductoService {
 
   // Eliminar un producto
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // Lanza error si no existe el producto
+    const producto = await this.productoRepository.findOne({
+      where: { id_producto: id },
+      relations: ['ventas'],
+    });
+  
+    if (!producto) {
+      throw new NotFoundException(`Producto #${id} no encontrado`);
+    }
+  
+    if (producto.ventas && producto.ventas.length > 0) {
+      throw new BadRequestException('No se puede eliminar un producto con ventas registradas.');
+    }
+  
     await this.productoRepository.delete(id);
   }
+  
+  
 
   // Método para calcular el precio final del producto basado en oferta
   private calcularPrecioFinal(product: Producto, isOferta: boolean, porcentajeOferta?: number) {

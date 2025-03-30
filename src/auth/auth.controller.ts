@@ -1,6 +1,6 @@
 import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
+import { CreateUsuarioDto } from '../usuario/dto/create-usuario.dto';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './public.decorator';
 
@@ -10,9 +10,11 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  register(@Body() registerDto: RegisterDto) {
+  register(@Body() registerDto: CreateUsuarioDto) {
+    console.log('Llega a /auth/register con:', registerDto); // ✅
     return this.authService.register(registerDto);
   }
+
 
   @Public()
   @Post('login')

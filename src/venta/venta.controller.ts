@@ -34,9 +34,13 @@ async crearVenta(
     return this.ventaService.obtenerMisVentas(req.user.id_usuario);
   }
 
-  @Get()
+  @Get('ventas-globales')
   @Roles('admin')
-  async obtenerTodas(): Promise<Venta[]> {
+  async obtenerVentasGlobales(): Promise<Venta[]> {
     return this.ventaService.obtenerTodas();
   }
+
+  
+
+  
 }
